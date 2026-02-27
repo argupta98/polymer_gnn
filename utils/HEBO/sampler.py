@@ -15,9 +15,7 @@ import pandas as pd
 
 from hebo.design_space.design_space import DesignSpace
 from hebo.optimizers.hebo import HEBO
-
-
-SimpleBaseSampler = optunahub.load_module("samplers/simple").SimpleBaseSampler
+from optunahub.samplers import SimpleBaseSampler
 
 
 class HEBOSampler(SimpleBaseSampler):  # type: ignore

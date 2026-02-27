@@ -8,7 +8,7 @@ from rdkit.Chem.Draw import IPythonConsole
 
 from utils.create_dataset_class import DataSet
 from utils.multiclass_NN import multiclass_NN
-from utils.split_dataset import split
+from utils.split_dataset import split_dataset
 from utils.scale_graph_features import scale
 
 import optuna
@@ -39,17 +39,21 @@ class HyperparameterOptimization:
 
         # Train/validation dataset setup
         self.db_file = 'experiments/hyperopt_test/db_rd_1.csv'
-        # self.SPLIT_RATIO = '0.4,0.3,0.3' # Train, Val, Test
-        self.SPLIT_RATIO = '0.7,0.3' # Train, Val, Test
         self.MIXED = False
         self.SMILES = 'data_preprocessing/SMILES.txt'
 
-        split_db = split(self.db_file, self.SEED, self.SPLIT_RATIO, self.MIXED)
-
-        ### CHANGE TO SCALED_features
-        self.features = scale(split_db['train'], self.SMILES, self.DESCRIPTORS)
-
-        self.dataset = DataSet(self.db_file, self.features, split_db, self.LABELNAME, self.TASK, self.MODEL)
+        data_split = split_dataset(db_file = self.db_file,
+                                   class_col = self.LABELNAME,
+                                   val_size = 0.3,
+                                   test_size = 0.3,
+                                   mixed = self.MIXED,
+                                   random_state = self.SEED,)
+        
+        # Scale dataset using only node and edge features in train set
+        self.features = scale(data_split['train'], self.SMILES, self.DESCRIPTORS)
+        
+        # create dataloader
+        self.dataset = DataSet(data_split, self.features, self.LABELNAME, self.MIXED, self.TASK, self.MODEL)
 
     def objective(self, trial):
         # The parameters are automatically suggested based on the search space
