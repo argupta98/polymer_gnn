@@ -3,7 +3,7 @@ import datetime
 from dgllife.utils import EarlyStopping
 
 
-class Stopper_v2(object):
+class Stopper(object):
     def __init__(self, savepath, mode='higher', patience=10, filename=None, metric=None):
         '''
         Initializes a Stopper_v2 object

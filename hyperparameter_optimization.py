@@ -38,7 +38,7 @@ class HyperparameterOptimization:
         self.CUSTOM_PARAMS = {}
 
         # Train/validation dataset setup
-        self.db_file = 'experiments/rd_1_test/db_rd_1.csv'
+        self.db_file = 'experiments/hyperopt_test/db_rd_1.csv'
         # self.SPLIT_RATIO = '0.4,0.3,0.3' # Train, Val, Test
         self.SPLIT_RATIO = '0.7,0.3' # Train, Val, Test
         self.MIXED = False

@@ -1,101 +1,151 @@
-import pandas as pd
 import numpy as np
-import re
+import pandas as pd
+from sklearn.model_selection import StratifiedShuffleSplit
 
-def shuffle_groups(df, group_column, SEED):
-    # Get unique groups and shuffle them
-    shuffled_groups = np.random.RandomState(seed=SEED).permutation(df[group_column].unique())
-    
-    # Reorder the DataFrame based on the shuffled groups
-    reordered_df = pd.concat([df[df[group_column] == group] for group in shuffled_groups])
-    
-    return reordered_df.reset_index(drop=True)
+def preprocess_dataframe(df: pd.DataFrame, class_col: str) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """
+    Splits a combined peptide/polymer dataframe into the three inputs
+    expected by split_dataset.
 
-def get_idx(df, start_idx, set_len):
-    '''
-    Helper function for split. Used to get idx of db_file for where train/val/test sets end.
-    '''
+    Returns:
+        peptides:       one row per peptide, with columns [ID, class_col, ...]
+        polymer_groups: one row per polymer group, with columns [group_id, class_col]
+        polymers:       one row per polymer, with columns [ID, group_id, class_col, ...]
+    """
     
-    end_row = df.iloc[start_idx + set_len, :]
-    end_group = end_row['group']
-    end_idx = end_row.name
-    
-    end_group_idx = df['group'][df['group'] == end_group].index.to_list()
+    # Drop rows with missing class labels before splitting
+    n_before = len(df)
+    df = df.dropna(subset=[class_col]).copy()
+    n_dropped = n_before - len(df)
+    if n_dropped > 0:
+        print(f"Warning: dropped {n_dropped} rows with missing '{class_col}' values.")
 
-    if (end_idx - min(end_group_idx)) >= 0.5*len(end_group_idx):
-        return max(end_group_idx)
+    # ── Detect type from ID ───────────────────────────────────────────────────
+    is_polymer = df["ID"].str.match(r"^polyID\d+_S\d+$")
+    is_peptide = df["ID"].str.match(r"^pepID\d+$")
+
+    # Sanity check for unrecognized ID formats
+    unrecognized = df[~is_polymer & ~is_peptide]["ID"].tolist()
+    if unrecognized:
+        raise ValueError(f"Unrecognized ID format for: {unrecognized[:5]}")
+
+    # ── Peptides ──────────────────────────────────────────────────────────────
+    peptides = df[is_peptide].copy().reset_index(drop=True)
+
+    # ── Polymers ──────────────────────────────────────────────────────────────
+    polymers = df[is_polymer].copy().reset_index(drop=True)
+
+    # Extract group_id from e.g. "polyID14_S94" → "polyID14"
+    polymers["group_id"] = polymers["ID"].str.extract(r"^(polyID\d+)_S\d+$")
+
+    # ── Polymer groups (one row per group, class must be unique per group) ────
+    # Validate: all members of a group share the same class
+    group_class_counts = polymers.groupby("group_id")[class_col].nunique()
+    inconsistent = group_class_counts[group_class_counts > 1].index.tolist()
+    if inconsistent:
+        raise ValueError(f"Groups with inconsistent classes: {inconsistent}")
+
+    polymer_groups = (
+        polymers.groupby("group_id")[class_col]
+        .first()
+        .reset_index()
+    )
+
+    return peptides, polymer_groups, polymers
+
+
+def polymers_for_groups(polymers: pd.DataFrame, group_ids) -> pd.DataFrame:
+    """Expand a set of group_ids to their individual polymer rows."""
+    return polymers[polymers["group_id"].isin(group_ids)].reset_index(drop=True)
+
+
+def _stratified_split(df, class_col, test_size, random_state):
+    """Split a dataframe, preserving class proportions."""
+    sss = StratifiedShuffleSplit(n_splits=1, test_size=test_size, random_state=random_state)
+    idx_train, idx_test = next(sss.split(df, df[class_col]))
+    return df.iloc[idx_train].reset_index(drop=True), df.iloc[idx_test].reset_index(drop=True)
+
+
+def _split_mixed(peptides, polymer_groups, polymers, class_col, val_size, test_size, random_state):
+    """
+    Stratified split of both peptides and polymer groups, then recombine.
+    Polymer groups are the unit of splitting (not individual polymers).
+    """
+    # Adjust val_size to be relative to the remaining data after the test split
+    # e.g. for 70/15/15: cut off 15% as test, then cut off 0.15/0.85 ≈ 17.6% of remainder as val
+    relative_val = val_size / (1 - test_size) if val_size > 0 else 0
+
+    # --- Polymer groups (split at group level) ---
+    grp_train, grp_test = _stratified_split(polymer_groups, class_col, test_size, random_state)
+    if val_size > 0:
+        grp_train, grp_val = _stratified_split(grp_train, class_col, relative_val, random_state)
+
+    # --- Peptides (split at individual level) ---
+    pep_train, pep_test = _stratified_split(peptides, class_col, test_size, random_state)
+    if val_size > 0:
+        pep_train, pep_val = _stratified_split(pep_train, class_col, relative_val, random_state)
+
+    # --- Expand polymer groups → individual polymers and combine with peptides ---
+    splits = {
+        "train": pd.concat([pep_train, polymers_for_groups(polymers, grp_train["group_id"])], ignore_index=True),
+        "test":  pd.concat([pep_test,  polymers_for_groups(polymers, grp_test["group_id"])],  ignore_index=True),
+    }
+    if val_size > 0:
+        splits["val"] = pd.concat([pep_val, polymers_for_groups(polymers, grp_val["group_id"])], ignore_index=True)
+
+    return splits
+
+
+def _split_peptide_train_polymer_test(
+    peptides, polymer_groups, polymers, class_col, val_size, random_state
+):
+    """
+    Test set = all polymers.
+    Train (+ optional val) = all peptides, stratified by class.
+    """
+    # All polymers go to test
+    test = polymers.copy()
+
+    # Peptides split into train (+ optional val)
+    if val_size > 0:
+        train, val = _stratified_split(peptides, class_col, val_size, random_state)
+        return {"train": train, "val": val, "test": test}
     else:
-        return min(end_group_idx) - 1
+        return {"train": peptides.copy(), "test": test}
 
-def split(db_file, SEED, SPLIT_RATIO, MIXED = True):
-    '''
-    Split data into {'mixed': BOOL, 'train': {ID: seq}, 'val': {...}, 'test': {...} }
-    mixed is removed in create_dataset_class.py before passed into mutliclass_NN object.
-    '''
-    
-    db = pd.read_csv(db_file)
 
-    SPLIT_RATIO = re.split(',', SPLIT_RATIO)
-    SPLIT_RATIO = list(map(float, SPLIT_RATIO)) 
+def split_dataset(
+    db_file: str,
+    class_col: str,
+    val_size: float = 0.15,
+    test_size: float = 0.15,
+    mixed: bool = True,
+    random_state: int = 42,
+) -> dict[str, pd.DataFrame]:
+    """
+    Split peptides and polymers into train/val/test sets.
 
-    if MIXED == False: # len(SPLIT_RATIO) = 2: train/val sets are peptides and split; test set are polymers
-    
-        peptides_df = db[db["ID"].str.contains("pep", na=False)]
-        peptides_df = peptides_df.sample(frac=1, random_state=SEED).reset_index(drop=True)
+    Args:
+        df:             pandas dataframe of polymer+peptide database
+        class_col:      column name to use for stratification
+        val_size:       fraction of data for validation (0.0 to skip, giving train/test only)
+        test_size:      fraction of data for test
+        mixed:          if True, peptides and polymers are distributed across all splits;
+                        if False, train(/val) = peptides only, test = polymers only
+        random_state:   random seed for reproducibility
 
-        train_idx = int(len(peptides_df) * SPLIT_RATIO[0])
-        train_set = peptides_df.iloc[:train_idx]
-        val_set   = peptides_df.iloc[train_idx:]
-
-        polymer_df = db[db["ID"].str.contains("poly", na=False)]
-        test_set = polymer_df
-
-    if MIXED == True: # len(SPLIT_RATIO) = 3: mixes peptides + polymers to create train/val/test sets
-        
-        poly_idx = db['ID'].str.contains('poly')
-        db['group'] = db[poly_idx]['ID'].apply(lambda x: int(re.split(r'_', x)[0][6:]))
+    Returns:
+        dict with keys "train", "test", and optionally "val"
+    """
     
-        start_idx = max(db['group'].value_counts().index.to_list())
+    df = pd.read_csv(db_file)
+    peptides, polymer_groups, polymers = preprocess_dataframe(df=df, class_col=class_col)
     
-        vals = list(db['group'].value_counts().to_list())
-        
-        if np.unique(vals).size == 1:
-            k = vals[0]
-    
-        pep_idx = db['ID'].str.startswith('pepID')
-    
-        # Shuffle and assign groups directly
-        db.loc[pep_idx, 'group'] = (
-            db[pep_idx]
-            .sample(frac=1, random_state=SEED)  # Shuffle only the matching rows
-            .assign(group=lambda x: (np.arange(len(x)) // k) + start_idx + 1)['group']  # Group by size 2
+    if mixed:
+        return _split_mixed(
+            peptides, polymer_groups, polymers, class_col, val_size, test_size, random_state
         )
-    
-        db['group'] = db['group'].astype(int) 
-    
-        df_shuffled = shuffle_groups(db, 'group', SEED)
-    
-        # train set
-        train_start_idx = 0
-        train_set_len = int(np.around(len(df_shuffled)*SPLIT_RATIO[0]))
-        train_end_idx = get_idx(df_shuffled, train_start_idx, train_set_len) + 1
-        train_set = df_shuffled.iloc[train_start_idx:train_end_idx,:]
-    
-        # val set
-        val_start_idx = train_end_idx
-        val_set_len = int(np.around(len(df_shuffled)*SPLIT_RATIO[1]))
-        val_end_idx = get_idx(df_shuffled, val_start_idx, val_set_len) + 1
-        val_set = df_shuffled.iloc[val_start_idx:val_end_idx,:]
-    
-        # test set
-        test_start_idx = val_end_idx
-        test_set_len = int(np.around(len(df_shuffled)*SPLIT_RATIO[2]))
-        test_end_idx = get_idx(df_shuffled, test_start_idx, test_set_len) + 1
-        test_set = df_shuffled.iloc[test_start_idx:test_end_idx,:]
-
-    return  {'mixed': MIXED, 
-             'train': train_set.set_index('ID')['sequence'].to_dict(), 
-             'val': val_set.set_index('ID')['sequence'].to_dict(), 
-             'test': test_set.set_index('ID')['sequence'].to_dict()}
-    
-    
+    else:
+        return _split_peptide_train_polymer_test(
+            peptides, polymer_groups, polymers, class_col, val_size, random_state
+        )

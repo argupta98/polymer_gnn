@@ -4,6 +4,7 @@ import dgl
 import json
 import re
 import joblib
+import numpy as np
 
 from torch.utils.data import DataLoader
 
@@ -63,15 +64,14 @@ class infer:
         with torch.no_grad():
             for batch_id, batch_data in enumerate(data_loader):
                 IDs, bg = batch_data
-                logits = self._predict(model, bg)
+                logits = self._predict(model, bg) # (B, num_classes)
 
                 all_IDs.extend(IDs)
-                all_preds.append(logits.detach().cpu())
+                all_preds.append(torch.softmax(logits, dim=-1).detach().cpu().numpy())
 
-        all_preds = torch.cat(all_preds, dim=0)
-        all_preds = torch.sigmoid(all_preds).numpy().ravel()
+        all_preds = np.concatenate(all_preds, axis=0) # (N, num_classes)
 
-        return [*zip(all_IDs, all_preds)]
+        return list(zip(all_IDs, all_preds))
 
     def _collate_molgraphs(self, data: list[tuple[str, dgl.DGLGraph]]):
         """

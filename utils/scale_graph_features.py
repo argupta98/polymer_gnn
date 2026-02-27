@@ -28,6 +28,7 @@ def scale_features(type_, molecules, unscaled_features):
     if len(unique_mols) <= 2:
 
         # Zero out features if there is no diversity in nodes/edges present (i.e., <= 2)
+        # Otherwise, min_max gives one-hot encoding
         for key, val in unscaled_features[type_].items():
             num_features = len(val)
             scaled_features[key] = np.zeros(num_features)
@@ -62,10 +63,10 @@ def scale(train_set, SMILES, DESCRIPTORS):
     unscaled_feats = get_unscaled_features(SMILES,DESCRIPTORS)
 
     # Consider only monomers and bonds in the train dataset
-    all_monomers = ''.join(train_set.values())
-    all_bonds = ''.join(
-        (len(val) - 1) * 'Amb' if 'pep' in key else (len(val) - 1) * 'Cc'
-        for key, val in train_set.items()
+    all_monomers = "".join(train_set['sequence'].tolist())
+    all_bonds = "".join(
+        (len(row.sequence) - 1) * 'Amb' if 'pep' in row.ID else (len(row.sequence) - 1) * 'Cc'
+        for row in train_set[['ID', 'sequence']].itertuples()
     )
 
     # fit_transform features in train dataset; apply transform to features in val/test sets
