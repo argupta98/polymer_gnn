@@ -28,9 +28,9 @@ class HyperparameterOptimization:
         self.SEED = seed
         self.TASK = 'classification'
         self.MODEL = model
-        self.LABELNAME = 'binary_class'
+        self.LABELNAME = '3_classes'
         self.NUM_EPOCHS = num_epochs
-        self.NUM_WORKERS = os.cpu_count()
+        self.NUM_WORKERS = len(os.sched_getaffinity(0))
         self.MODEL_PATH = './past_trials/' + model + '/hyperparameter_optimization'
         self.SAVE_MODEL = True
         self.SAVE_OPT = True
@@ -38,8 +38,8 @@ class HyperparameterOptimization:
         self.CUSTOM_PARAMS = {}
 
         # Train/validation dataset setup
-        self.db_file = 'experiments/hyperopt_test/db_rd_1.csv'
-        self.MIXED = False
+        self.db_file = 'data_preprocessing/db.csv'
+        self.MIXED = True
         self.SMILES = 'data_preprocessing/SMILES.txt'
 
         data_split = split_dataset(db_file = self.db_file,
@@ -124,16 +124,21 @@ class HyperparameterOptimization:
 
 # Main block to parse command-line arguments and run optimization
 if __name__ == "__main__":
+    
     parser = argparse.ArgumentParser(description="Hyperparameter optimization")
     parser.add_argument("--seed", type=int, required=True, help="Seed for splitting data")
     parser.add_argument("--GPU", type=str, required=True, help="GPU to use for the optimization")
     parser.add_argument("--model", type=str, required=True, help="Model name")
     parser.add_argument("--num_epochs", type=int, required=True, help="Number of epochs per trial")
     parser.add_argument("--num_trials", type=int, required=True, help="Number of trials for optimization")
-    parser.add_argument("--rand_samples", type=int, required=True, help="Number of initial random samples to explore landscape")
+    parser.add_argument("--rand_samples", type=int, required=True, help="Number of initial random samples to explore hyperparameter landscape")
 
     args = parser.parse_args()
 
-    optimizer = HyperparameterOptimization(seed=args.seed, GPU=args.GPU, model=args.model, num_epochs=args.num_epochs,
+    optimizer = HyperparameterOptimization(seed=args.seed,
+                                           GPU=args.GPU,
+                                           model=args.model,
+                                           num_epochs=args.num_epochs,
                                            num_trials=args.num_trials)
+    
     optimizer.run_hpo(num_trials=args.num_trials, rand_samples=args.rand_samples)
