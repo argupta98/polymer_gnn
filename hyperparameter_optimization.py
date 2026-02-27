@@ -118,8 +118,11 @@ class HyperparameterOptimization:
             storage=db_url,  # Use SQLite as the storage backend
             load_if_exists=True  # Load the study if it already exists
         )
+        
+        completed_trials = sum(t.state == optuna.trial.TrialState.COMPLETE for t in study.trials)
+        trials_to_run = num_trials - completed_trials
 
-        study.optimize(self.objective, n_trials=num_trials)
+        study.optimize(self.objective, n_trials=trials_to_run)
 
 
 # Main block to parse command-line arguments and run optimization
