@@ -142,10 +142,20 @@ def split_dataset(
     peptides, polymer_groups, polymers = preprocess_dataframe(df=df, class_col=class_col)
     
     if mixed:
-        return _split_mixed(
+        data_split = _split_mixed(
             peptides, polymer_groups, polymers, class_col, val_size, test_size, random_state
         )
     else:
-        return _split_peptide_train_polymer_test(
+        data_split = _split_peptide_train_polymer_test(
             peptides, polymer_groups, polymers, class_col, val_size, random_state
         )
+        
+    # Print data split statistics
+    for name, df_set in data_split.items():
+        print(f"\n{name.upper()}:")
+        print(f"size: {len(df_set) / sum([len(df_set) for df_set in data_split.values()])}")
+        print(f"peptide proportion: {df_set['ID'].str.contains('pep', na=False).sum() / (len(df_set))}")
+        print(f"polymer proportion: {df_set['ID'].str.contains('poly', na=False).sum() / (len(df_set))}")
+        print(df_set[class_col].value_counts(normalize=True).round(3))
+    
+    return data_split

@@ -5,7 +5,8 @@ import torch.nn.functional as F
 
 import matplotlib.pyplot as plt
 from scipy.stats import pearsonr, spearmanr, kendalltau
-from sklearn.metrics import accuracy_score, roc_auc_score, f1_score, precision_score, recall_score, precision_recall_curve, auc, hamming_loss, roc_curve, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.preprocessing import label_binarize
+from sklearn.metrics import accuracy_score, roc_auc_score, f1_score, precision_score, recall_score, precision_recall_curve, auc, hamming_loss, roc_curve, confusion_matrix, ConfusionMatrixDisplay, average_precision_score
 
 
 class Meter():
@@ -70,27 +71,35 @@ class Meter():
                     'recall': recall_score(labels, preds, average='weighted', zero_division=0),
                     'precision': precision_score(labels, preds, average='weighted', zero_division=0),
                     'accuracy': accuracy_score(labels, preds),
-                    'confusion_matrix': confusion_matrix(labels, preds)
+                    'confusion_matrix': confusion_matrix(labels, preds, labels=list(range(num_classes)))
                 }
 
         # ROC-AUC (unweighted average across classes)
         if num_classes == 2: # if binary
             if np.unique(labels).size < 2: # makes sure both classes are present
                 metrics["roc_auc"] = np.nan
+                metrics["pr_auc"] = np.nan
             else:
                 metrics["roc_auc"] = roc_auc_score(labels, probs[:,1])
+                metrics["pr_auc"] = average_precision_score(labels, probs[:,1])
         else:
             if np.unique(labels).size < num_classes: # makes sure all classes are present
                 metrics["roc_auc"] = np.nan
+                metrics["pr_auc"] = np.nan
             else:
                 metrics["roc_auc"] = roc_auc_score(labels, probs, multi_class="ovr", average="macro")
+                
+                Y = label_binarize(labels, classes=list(range(num_classes)))
+                metrics["pr_auc"] = average_precision_score(Y, probs, average="macro")
                 
             # One-vs-rest AUC per class -- ONLY FOR classes > 2
             for i in range(num_classes):
                 bin_label = (labels == i).astype(int)
                 if np.unique(bin_label).size < 2:
                     metrics[f"{i}vr_roc_auc"] = np.nan
+                    metrics[f"{i}vr_pr_auc"] = np.nan
                 else:
                     metrics[f"{i}vr_roc_auc"] = roc_auc_score(bin_label, probs[:, i])
+                    metrics[f"{i}vr_pr_auc"] = average_precision_score(bin_label, probs[:, i])
                 
         return metrics

@@ -30,7 +30,7 @@ class HyperparameterOptimization:
         self.MODEL = model
         self.LABELNAME = '3_classes'
         self.NUM_EPOCHS = num_epochs
-        self.NUM_WORKERS = len(os.sched_getaffinity(0))
+        self.NUM_WORKERS = 8
         self.MODEL_PATH = './past_trials/' + model + '/hyperparameter_optimization'
         self.SAVE_MODEL = True
         self.SAVE_OPT = True

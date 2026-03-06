@@ -76,17 +76,10 @@ class multiclass_NN():
         self._save_opt = SAVE_OPT
         self._save_config = SAVE_CONFIG
 
-        self._log = [['dataset', 'epoch', 'loss', 'roc_auc_avg', 'f1', 'recall', 'precision', 'accuracy', 'confusion_matrix']]
+        self._log = [] # cols initialized during the first training run
 
         self._ntask = self._dataset._ntask
         self._task = self._dataset._task
-        
-        # 1-v-rest ROC-AUC to log; ONLY FOR num_classes > 2
-        if self._ntask > 2:
-            for i in range(self._ntask):
-                self._log[0].append(str(i) + 'vr_roc_auc')
-
-        self._log[0].append('time')
 
         if torch.cuda.is_available():
             self._device = torch.device('cuda')
@@ -100,7 +93,6 @@ class multiclass_NN():
             C = self._ntask  # number of classes (or set manually)
             
             counts = np.bincount(y.astype(int), minlength=C)
-            
             
             if (counts == 0).any():
                 missing = np.where(counts == 0)[0].tolist()
@@ -278,6 +270,11 @@ class multiclass_NN():
         epoch_end_time = datetime.now()
 
         metrics = train_meter.compute_metrics(loss_list)
+        
+        # if log is empty, append title
+        if len(self._log) == 0:
+            self._log.append(sum([['dataset', 'epoch'], list(metrics.keys()), ['time']], []))
+        
         data = sum([['train', epoch+1], list(metrics.values()), [epoch_end_time - epoch_start_time]], [])
         self._log.append(data)
         
@@ -404,7 +401,8 @@ class multiclass_NN():
             return -test_score[0]['roc_auc']
         else:
             most_potent_bin = self._ntask - 1
-            return -test_score[0][f"{most_potent_bin}vr_roc_auc"]
+            # return -test_score[0][f"{most_potent_bin}vr_roc_auc"]
+            return -test_score[0][f"{most_potent_bin}vr_pr_auc"]
     
     def export_results(self, data):
         
