@@ -2,8 +2,6 @@ samples/
 .venv
 samples_1replicate/
 model_performance_analysis/generic_val_on_infer
-polymer_combinations.csv
-polymer_combinations.parquet
 __pycache__
 samples_one_replicate
 inference_results
