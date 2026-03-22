@@ -1,0 +1,15 @@
+{
+  "model": "MPNN",
+  "n_tasks": 3,
+  "in_node_feats": 104,
+  "in_edge_feats": 79,
+  "lr": 0.005682568210762825,
+  "weight_decay": 1.0063220802759318e-06,
+  "patience": 30,
+  "batch_size": 1024,
+  "node_out_feats": 64,
+  "edge_hidden_feats": 128,
+  "num_step_message_passing": 6,
+  "num_step_set2set": 3,
+  "num_layer_set2set": 3
+}
