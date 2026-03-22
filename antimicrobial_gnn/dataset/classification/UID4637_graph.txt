@@ -1,0 +1,9 @@
+MONOMERS
+1 Q
+2 H
+3 P_amd
+
+
+BONDS
+1 2 AMB
+2 3 AMB

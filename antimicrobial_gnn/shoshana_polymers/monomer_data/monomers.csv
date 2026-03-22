@@ -1,0 +1,20 @@
+mon_class,mon_name,mon_abb,SMILES,min_class_wt,max_class_wt,min_mon_wt,max_mon_wt,increments,molar_mass,notes
+Cationic,(3-acrylamidopropyl)trimethylammonium chloride,Tma,C[N+](C)(C)CCCNC(=O)C=C,10.0,90.0,10.0,90.0,5.0,206.71,"FOR ALL MONOMERS: the C=C double bond goes away during polymerization, as a new CC bond forms between monomers. Might need to remove the C=C from these SMILES representations"
+Cationic,guanidinoethyl acrylamide ,Aeg,NC(=[NH2+])NCCNC(=O)C=C,10.0,90.0,0.0,20.0,5.0,192.65,"Haven't used this yet, but I could try it moving forward. It is more synthetically challenging."
+Hydrophilic,4-acryloylmorpholine,Mo,C=CC(=O)N1CCOCC1,0.0,80.0,0.0,90.0,5.0,141.17,
+Hydrophilic,N-(3-methoxypropyl)acrylamide,Mep,COCCCNC(=O)C=C,0.0,80.0,0.0,90.0,5.0,143.18,
+Hydrophobic,N-Isopropylacrylamide,Ni,CC(C)NC(=O)C=C,10.0,45.0,0.0,40.0,5.0,113.16,
+Hydrophobic,N-phenylacrylamide,Phe,C=CC(=O)Nc1ccccc1,10.0,45.0,0.0,40.0,5.0,147.17,
+Hydrophobic,N-dodecylacrylamide,Do,CCCCCCCCCCCCNC(=O)C=C,10.0,45.0,0.0,30.0,5.0,239.4,
+Hydrophobic,N-butylacrylamide,Bam,CCCCNC(=O)C=C,10.0,45.0,0.0,40.0,5.0,127.18,
+Hydrophobic,N-octylacrylamide,Oct,CCCCCCCCNC(=O)C=C,10.0,45.0,0.0,30.0,5.0,183.29,
+Hydrophobic,oleylacrylamide,Olam,CCCCCCCC/C=C\CCCCCCCCNC(=O)C(=C),10.0,45.0,0.0,30.0,5.0,321.3,this is the only monomer that has a C=C bond that stays after polymerization (I put the bond that stays in bold - the other one reacts during polymerization and becomes C-C)
+Hydrophobic,N-(Butoxymethyl)acrylamide,Bmam,CCCCOCNC(=O)C=C,10.0,45.0,0.0,50.0,5.0,157.21,
+Hydrophobic,"N-(1,1,3,3-Tetramethylbutyl)acrylamide",Tmb,CC(C)(C)CC(C)(C)NC(=O)C=C,10.0,45.0,0.0,30.0,5.0,183.29,
+Endgroup (back),,Z,O=C(O)CCSC=S,,,,,,,connects via the carbon bonded to the =S (bold)
+Endgroup (front),,R,CC(C#N)CCC(=O)O,,,,,,,More common front end. Connects via the bold C
+,,AIBN,,,,,,,,Less common front end. Connects via the bold C
+,,,,,,,,,,
+,,,,,,,,,,
+,Min DP,Max DP,Increments,,,,,,,
+Polymer,10,120,10,,,,,,,

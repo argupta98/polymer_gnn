@@ -1,0 +1,13 @@
+MONOMERS
+1 F
+2 I
+3 T
+4 V
+5 H_amd
+
+
+BONDS
+1 2 AMB
+2 3 AMB
+3 4 AMB
+4 5 AMB

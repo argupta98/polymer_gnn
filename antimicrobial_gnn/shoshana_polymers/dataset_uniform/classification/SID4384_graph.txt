@@ -1,0 +1,143 @@
+MONOMERS
+1 Oct
+2 Tma
+3 Tma
+4 Tma
+5 Tma
+6 Mep
+7 Mep
+8 Tma
+9 Mep
+10 Tma
+11 Mep
+12 Mep
+13 Tma
+14 Tma
+15 Tma
+16 Oct
+17 Tma
+18 Oct
+19 Oct
+20 Tma
+21 Oct
+22 Mep
+23 Oct
+24 Tma
+25 Tma
+26 Tma
+27 Oct
+28 Tma
+29 Mep
+30 Tma
+31 Tma
+32 Tma
+33 Mep
+34 Oct
+35 Mep
+36 Oct
+37 Mep
+38 Tma
+39 Tma
+40 Oct
+41 Oct
+42 Tma
+43 Mep
+44 Tma
+45 Tma
+46 Oct
+47 Mep
+48 Tma
+49 Oct
+50 Oct
+51 Tma
+52 Mep
+53 Mep
+54 Tma
+55 Oct
+56 Mep
+57 Oct
+58 Tma
+59 Tma
+60 Oct
+61 Oct
+62 Oct
+63 Tma
+64 Mep
+65 Tma
+66 Oct
+67 Tma
+68 Tma
+69 Tma
+70 Tma
+
+
+BONDS
+1 2 CC
+2 3 CC
+3 4 CC
+4 5 CC
+5 6 CC
+6 7 CC
+7 8 CC
+8 9 CC
+9 10 CC
+10 11 CC
+11 12 CC
+12 13 CC
+13 14 CC
+14 15 CC
+15 16 CC
+16 17 CC
+17 18 CC
+18 19 CC
+19 20 CC
+20 21 CC
+21 22 CC
+22 23 CC
+23 24 CC
+24 25 CC
+25 26 CC
+26 27 CC
+27 28 CC
+28 29 CC
+29 30 CC
+30 31 CC
+31 32 CC
+32 33 CC
+33 34 CC
+34 35 CC
+35 36 CC
+36 37 CC
+37 38 CC
+38 39 CC
+39 40 CC
+40 41 CC
+41 42 CC
+42 43 CC
+43 44 CC
+44 45 CC
+45 46 CC
+46 47 CC
+47 48 CC
+48 49 CC
+49 50 CC
+50 51 CC
+51 52 CC
+52 53 CC
+53 54 CC
+54 55 CC
+55 56 CC
+56 57 CC
+57 58 CC
+58 59 CC
+59 60 CC
+60 61 CC
+61 62 CC
+62 63 CC
+63 64 CC
+64 65 CC
+65 66 CC
+66 67 CC
+67 68 CC
+68 69 CC
+69 70 CC

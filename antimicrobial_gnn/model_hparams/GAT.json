@@ -1,0 +1,17 @@
+{
+  "model": "GAT",
+  "n_tasks": 1,
+  "in_node_feats": 104,
+  "in_edge_feats": 79,
+  "lr": 0.0060074423125888,
+  "weight_decay": 0.00018119732941518872,
+  "patience": 15,
+  "batch_size": 256,
+  "dropout": 0.019910485076364816,
+  "gnn_hidden_feats": 32,
+  "num_heads": 4,
+  "alpha": 0.69093,
+  "predictor_hidden_feats": 128,
+  "num_gnn_layers": 4,
+  "residual": true
+}

@@ -1,0 +1,7 @@
+MONOMERS
+1 R
+2 H
+
+
+BONDS
+1 2 AMB

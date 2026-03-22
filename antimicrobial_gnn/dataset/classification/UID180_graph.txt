@@ -1,0 +1,21 @@
+MONOMERS
+1 G
+2 P
+3 I
+4 P
+5 W
+6 Q
+7 R
+8 R
+9 I
+
+
+BONDS
+1 2 AMB
+2 3 AMB
+3 4 AMB
+4 5 AMB
+5 6 AMB
+6 7 AMB
+7 8 AMB
+8 9 AMB

@@ -1,0 +1,13 @@
+Molecule,SMILES,Description
+Tma,C[N+](C)(C)CCCNC(=O)C=C,
+Aeg,NC(=[NH2+])NCCNC(=O)C=C,
+Mo,C=CC(=O)N1CCOCC1,
+Mep,COCCCNC(=O)C=C,
+Ni,CC(C)NC(=O)C=C,
+Phe,C=CC(=O)Nc1ccccc1,
+Do,CCCCCCCCCCCCNC(=O)C=C,
+Bam,CCCCNC(=O)C=C,
+Oct,CCCCCCCCNC(=O)C=C,
+Olam,CCCCCCCC/C=C\CCCCCCCCNC(=O)C(=C),
+Bmam,CCCCOCNC(=O)C=C,
+Tmb,CC(C)(C)CC(C)(C)NC(=O)C=C,

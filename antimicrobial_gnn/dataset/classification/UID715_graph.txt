@@ -1,0 +1,15 @@
+MONOMERS
+1 Q
+2 V
+3 H
+4 H
+5 Q
+6 K
+
+
+BONDS
+1 2 AMB
+2 3 AMB
+3 4 AMB
+4 5 AMB
+5 6 AMB
