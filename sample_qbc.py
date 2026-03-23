@@ -61,6 +61,7 @@ import pandas as pd
 import torch
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from diversity_sampling_utils.picking_utils import get_max_min_picks
 
@@ -152,7 +153,7 @@ def build_graphs(
 ) -> list[tuple[str, dgl.DGLGraph]]:
     """Return list of (normalized_ID, dgl_graph) for all rows in df."""
     records = []
-    for _, row in df.iterrows():
+    for _, row in tqdm(df.iterrows(), total=len(df), desc="Building graphs"):
         raw_id = str(row["ID"])
         parts = raw_id.split("_")
         norm_id = "_".join(str(int(p)) for p in parts[:2]) if len(parts) >= 2 else raw_id
@@ -178,6 +179,7 @@ def run_inference(
     candidate_df: pd.DataFrame,
     scaled_feats: dict,
     device: torch.device,
+    data: list[tuple[str, dgl.DGLGraph]],
 ) -> pd.DataFrame:
     """
     Run multiclass inference for a single model.
@@ -189,9 +191,6 @@ def run_inference(
     hyperparams = json.loads((model_path / "configure.json").read_text())
     model_name = hyperparams["model"]
     n_tasks = hyperparams["n_tasks"]
-
-    logger.info(f"Building graphs for {model_path.name} ({len(candidate_df)} candidates) ...")
-    data = build_graphs(candidate_df, scaled_feats, model_name)
 
     loader = DataLoader(
         dataset=data,
@@ -452,6 +451,9 @@ def get_args():
     parser.add_argument("--output", type=str, default="qbc_samples.csv", help="Output CSV path")
     parser.add_argument("--save_inference", type=str, default=None, help="Directory to save per-model inference results (optional)")
 
+    # Debug
+    parser.add_argument("--debug", action="store_true", help="Debug mode: run the full pipeline on the first 1000 candidates only")
+
     return parser.parse_args()
 
 
@@ -465,7 +467,13 @@ def main():
     # 1. Load candidates
     # ------------------------------------------------------------------
     candidates = load_candidates(args)
-    validate_candidate_data(candidates)
+
+    if args.debug:
+        logger.info("DEBUG MODE: truncating to first 1000 candidates")
+        candidates = candidates.head(1000).reset_index(drop=True)
+
+    if not args.debug:
+        validate_candidate_data(candidates)
 
     if "ID" not in candidates.columns or "sequence" not in candidates.columns:
         raise ValueError("Candidate data must have 'ID' and 'sequence' columns")
@@ -494,12 +502,16 @@ def main():
     # Detect n_classes from first model
     first_config = json.loads((model_dirs[0] / "configure.json").read_text())
     n_classes = first_config["n_tasks"]
+    model_name = first_config["model"]
     logger.info(f"n_classes from models: {n_classes}")
+
+    logger.info(f"Building graphs for {model_dirs[0].name} ({len(candidates)} candidates) ...")
+    data = build_graphs(candidates, scaled_feats, model_name)
 
     model_results: dict[str, pd.DataFrame] = {}
     for model_dir in model_dirs:
         logger.info(f"Running inference: {model_dir.name}")
-        result_df = run_inference(model_dir, candidates, scaled_feats, device)
+        result_df = run_inference(model_dir, candidates, scaled_feats, device, data)
         model_results[model_dir.name] = result_df
 
         if args.save_inference:
